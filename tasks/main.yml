@@ -1,0 +1,61 @@
+---
+# tasks file for loki
+
+- name: Create loki and promtail users
+  user:
+    name: "{{ item }}"
+    state: present
+    groups: "{{ item }}"
+  loop:
+    - loki
+    - promtail
+
+- name: Get loki and promtail users
+  command: id -g "{{ item }}"
+  register: loki_promtail_users
+  loop:
+    - loki
+    - promtail
+  failed_when: loki_promtail_users.rc != 0
+  changed_when: false
+
+- name: Create variables for loki and promtail users
+  set_fact:
+    loki_user: "{{ loki_promtail_users.results[0].stdout }}"
+    promtail_user: "{{ loki_promtail_users.results[1].stdout }}"
+
+- name: Create loki and promtail directories
+  file:
+    path: "/etc/{{ item }}"
+    state: directory
+    mode: 0775
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop:
+    - loki
+    - promtail
+
+- name: Copy loki and promtail configuration files
+  copy:
+    src: "{{ item.file }}"
+    dest: /etc/loki/
+    mode: 0664
+    owner: "{{ item.user }}"
+    group: "{{ item.user }}"
+  loop:
+    - file: files/loki-local-config.yaml
+      user: loki
+    - file: files/promtail-config.yaml
+      user: promtail
+
+- name: Import docker compose template
+  template:
+    src: templates/docker-compose.yaml.j2
+    dest: /etc/loki/docker-compose.yaml
+    mode: 0644
+    owner: "{{ ansible_user }}"
+
+- name: Start loki and promtail containers
+  community.docker.docker_compose_v2:
+    project_src: "/etc/loki/"
+    state: present

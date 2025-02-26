@@ -1,0 +1,28 @@
+services:
+  loki:
+    user: {{ loki_user }}:{{ loki_user }}
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-local-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki_network
+
+  promtail:
+    user: {{ promtail_user }}:{{ promtail_user }}
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log
+      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    networks:
+      - loki_network
+    depends_on:
+      - loki
+
+networks:
+  loki_network:
+    name: loki_network
+    driver: bridge

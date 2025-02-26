@@ -1,6 +1,14 @@
 ---
 # tasks file for loki
 
+- name: Create loki and promtail groups
+  group:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - loki
+    - promtail
+
 - name: Create loki and promtail users
   user:
     name: "{{ item }}"
@@ -24,7 +32,7 @@
     loki_user: "{{ loki_promtail_users.results[0].stdout }}"
     promtail_user: "{{ loki_promtail_users.results[1].stdout }}"
 
-- name: Create loki and promtail directories
+- name: Create loki and promtail configuration directories
   file:
     path: "/etc/{{ item }}"
     state: directory
@@ -34,6 +42,14 @@
   loop:
     - loki
     - promtail
+
+- name: Create loki data directories
+  file:
+    path: "/var/loki"
+    state: directory
+    mode: 0775
+    owner: loki
+    group: loki
 
 - name: Copy loki and promtail configuration files
   copy:

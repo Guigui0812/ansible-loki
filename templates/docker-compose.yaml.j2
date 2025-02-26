@@ -6,6 +6,7 @@ services:
       - "3100:3100"
     volumes:
       - ./loki-local-config.yaml:/etc/loki/local-config.yaml
+      - /var/loki:/data
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - loki_network

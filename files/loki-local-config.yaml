@@ -23,4 +23,14 @@ schema_config:
 
 storage_config:
   filesystem:
-    directory: /tmp/loki/chunks
+    directory: /data/index
+
+limits_config:
+  retention_period: 672h
+  max_query_lookback: 672h
+
+compactor:
+  working_directory: /tmp/loki-compactor
+  retention_enabled: true
+  retention_delete_delay: 2h
+  delete_request_store: filesystem

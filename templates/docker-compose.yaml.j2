@@ -13,6 +13,8 @@ services:
 
   promtail:
     user: {{ promtail_user }}:{{ promtail_user }}
+    group_add : 
+      - {{ logs_readers_group_id }}
     image: grafana/promtail:latest
     volumes:
       - /var/log:/var/log

@@ -8,18 +8,24 @@
   loop:
     - loki
     - promtail
+    - logs-readers
 
-- name: Create loki and promtail users
+- name: Create loki user
   user:
-    name: "{{ item }}"
+    name: loki
     state: present
-    groups: "{{ item }}"
-  loop:
-    - loki
-    - promtail
+    groups: loki
+
+- name: Create promtail user
+  user:
+    name: promtail
+    state: present
+    groups: 
+      - promtail
+      - logs-readers
 
 - name: Get loki and promtail users
-  command: id -g "{{ item }}"
+  command: id -u "{{ item }}"
   register: loki_promtail_users
   loop:
     - loki
@@ -31,6 +37,16 @@
   set_fact:
     loki_user: "{{ loki_promtail_users.results[0].stdout }}"
     promtail_user: "{{ loki_promtail_users.results[1].stdout }}"
+
+- name: Get logs-readers group
+  shell: getent group logs-readers | cut -d ":" -f 3
+  register: logs_readers_group
+  failed_when: logs_readers_group.rc != 0
+  changed_when: false
+
+- name: Create variable for logs-readers group
+  set_fact:
+    logs_readers_group_id: "{{ logs_readers_group.stdout }}"
 
 - name: Create loki and promtail configuration directories
   file:
@@ -63,6 +79,11 @@
       user: loki
     - file: files/promtail-config.yaml
       user: promtail
+
+- name: Install docker plugin for Loki
+  community.docker.docker_plugin:
+    plugin_name:  grafana/loki-docker-driver:3.3.2-arm64
+    state: present
 
 - name: Import docker compose template
   template:

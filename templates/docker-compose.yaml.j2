@@ -10,6 +10,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - loki_network
+    restart: always
 
   promtail:
     user: {{ promtail_user }}:{{ promtail_user }}

@@ -3,12 +3,10 @@
 
 - name: Create loki and promtail groups
   group:
-    name: "{{ item }}"
+    name: loki
     state: present
   loop:
     - loki
-    - promtail
-    - logs-readers
 
 - name: Create loki user
   user:
@@ -16,27 +14,15 @@
     state: present
     groups: loki
 
-- name: Create promtail user
-  user:
-    name: promtail
-    state: present
-    groups: 
-      - promtail
-      - logs-readers
-
-- name: Get loki and promtail users
-  command: id -u "{{ item }}"
-  register: loki_promtail_users
-  loop:
-    - loki
-    - promtail
-  failed_when: loki_promtail_users.rc != 0
+- name: Get loki
+  command: id -u loki
+  register: loki_user
+  failed_when: loki_user.rc != 0
   changed_when: false
 
-- name: Create variables for loki and promtail users
+- name: Create variables for loki user
   set_fact:
-    loki_user: "{{ loki_promtail_users.results[0].stdout }}"
-    promtail_user: "{{ loki_promtail_users.results[1].stdout }}"
+    loki_user: "{{ loki_user.stdout }}"
 
 - name: Get logs-readers group
   shell: getent group logs-readers | cut -d ":" -f 3
@@ -67,18 +53,13 @@
     owner: loki
     group: loki
 
-- name: Copy loki and promtail configuration files
+- name: Copy loki configuration file
   copy:
-    src: "{{ item.file }}"
-    dest: /etc/loki/
+    src: "{{ loki_config_file_path }}"
+    dest: /etc/loki/loki-config.yaml
     mode: 0664
-    owner: "{{ item.user }}"
-    group: "{{ item.user }}"
-  loop:
-    - file: files/loki-local-config.yaml
-      user: loki
-    - file: files/promtail-config.yaml
-      user: promtail
+    owner: loki
+    group: loki
 
 - name: Install docker plugin for Loki
   community.docker.docker_plugin:
@@ -92,7 +73,7 @@
     mode: 0644
     owner: "{{ ansible_user }}"
 
-- name: Start loki and promtail containers
+- name: Start loki container
   community.docker.docker_compose_v2:
     project_src: "/etc/loki/"
     state: present

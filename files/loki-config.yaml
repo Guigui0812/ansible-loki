@@ -1,3 +1,6 @@
+# Base configuration for Loki
+# This file can be overridden by the user with a custom configuration file with {{ loki_config_file_path }}
+
 auth_enabled: false
 
 server:

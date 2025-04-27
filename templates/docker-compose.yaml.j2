@@ -5,28 +5,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./loki-local-config.yaml:/etc/loki/local-config.yaml
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
       - /var/loki:/data
-    command: -config.file=/etc/loki/local-config.yaml
-    networks:
-      - loki_network
+    command: -config.file=/etc/loki/loki-config.yaml
     restart: always
-
-  promtail:
-    user: {{ promtail_user }}:{{ promtail_user }}
-    group_add : 
-      - {{ logs_readers_group_id }}
-    image: grafana/promtail:latest
-    volumes:
-      - /var/log:/var/log
-      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
-    command: -config.file=/etc/promtail/promtail-config.yaml
-    networks:
-      - loki_network
-    depends_on:
-      - loki
-
-networks:
-  loki_network:
-    name: loki_network
-    driver: bridge

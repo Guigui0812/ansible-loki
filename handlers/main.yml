@@ -1,2 +1,6 @@
 ---
 # handlers file for loki
+- name: Restart loki container
+  community.docker.docker_compose_v2:
+    project_src: "/opt/loki/"
+    state: restarted

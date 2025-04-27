@@ -60,6 +60,7 @@
     mode: 0664
     owner: loki
     group: loki
+  notify: Restart loki container
 
 - name: Install docker plugin for Loki
   community.docker.docker_plugin:
